@@ -32,8 +32,14 @@ export default function CardsPage() {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [categoryId, setCategoryId] = useState<number | undefined>(undefined);
-  const [editId, setEditId] = useState<number | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const [editCardId, setEditCardId] = useState<number | null>(null);
+  const [editQuestion, setEditQuestion] = useState("");
+  const [editAnswer, setEditAnswer] = useState("");
+  const [editCategoryId, setEditCategoryId] = useState<number | undefined>(
+    undefined
+  );
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   useEffect(() => {
     async function loadCategories() {
@@ -61,23 +67,35 @@ export default function CardsPage() {
   }
 
   function handleStartEdit(card: CardType) {
-    setEditId(card.id);
-    setQuestion(card.question);
-    setAnswer(card.answer);
-    setIsDialogOpen(true);
+    setEditCardId(card.id);
+    setEditQuestion(card.question);
+    setEditAnswer(card.answer);
+    setEditCategoryId(card.category_id);
+    setIsEditDialogOpen(true);
   }
 
   async function handleSaveEdit() {
-    if (editId == null) return;
-    await updateCard(editId, {
-      question,
-      answer,
-      category_id: categoryId ?? 0,
+    if (
+      editCardId == null ||
+      !editQuestion.trim() ||
+      !editAnswer.trim() ||
+      editCategoryId == null
+    ) {
+      alert("Please select a category before saving.");
+      return;
+    }
+
+    await updateCard(editCardId, {
+      question: editQuestion,
+      answer: editAnswer,
+      category_id: editCategoryId,
     });
-    setEditId(null);
-    setQuestion("");
-    setAnswer("");
-    setIsDialogOpen(false);
+
+    setEditCardId(null);
+    setEditQuestion("");
+    setEditAnswer("");
+    setEditCategoryId(undefined);
+    setIsEditDialogOpen(false);
     await loadCards();
   }
 
@@ -88,12 +106,42 @@ export default function CardsPage() {
 
   const inputStyles = {
     "& .MuiOutlinedInput-root": {
-      "& fieldset": { borderColor: "white" },
-      "& input": { color: "white" },
+      "& fieldset": {
+        borderColor: "rgba(255, 255, 255, 0.3)",
+        borderWidth: "1px",
+      },
+      "&:hover fieldset": {
+        borderColor: "rgba(255, 255, 255, 0.5)",
+      },
+      "&.Mui-focused fieldset": {
+        borderColor: "white",
+      },
     },
-    "& .MuiInputLabel-root": { color: "white" },
-    "& .MuiSelect-icon": { color: "white" },
-    "& .MuiSelect-select": { color: "white" },
+    "& .MuiInputLabel-root": {
+      color: "rgba(255, 255, 255, 0.7)",
+      "&.Mui-focused": {
+        color: "white",
+      },
+    },
+    "& .MuiInputBase-input": {
+      color: "white",
+    },
+    "& .MuiSelect-icon": {
+      color: "rgba(255, 255, 255, 0.7)",
+    },
+  };
+
+  const listItemStyles = {
+    border: "1px solid rgba(255, 255, 255, 0.2)",
+    borderRadius: 2,
+    mb: 1,
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    "&:hover": {
+      backgroundColor: "rgba(255, 255, 255, 0.08)",
+    },
   };
 
   return (
@@ -134,17 +182,18 @@ export default function CardsPage() {
           sx={inputStyles}
         />
         <div className="flex gap-2">
-          <Button variant="contained" onClick={handleCreate}>
-            Add Card
-          </Button>
           <Button
-            variant="outlined"
-            onClick={() => {
-              setQuestion("");
-              setAnswer("");
+            variant="contained"
+            onClick={handleCreate}
+            sx={{
+              backgroundColor: "white",
+              color: "black",
+              "&:hover": {
+                backgroundColor: "rgba(255, 255, 255, 0.9)",
+              },
             }}
           >
-            Clear
+            Add Card
           </Button>
         </div>
       </div>
@@ -152,29 +201,40 @@ export default function CardsPage() {
       {/* Cards list */}
       <List>
         {cards.map((c) => (
-          <ListItem
-            key={c.id}
-            sx={{
-              border: "1px solid white",
-              borderRadius: 2,
-              mb: 1,
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
+          <ListItem key={c.id} sx={listItemStyles}>
             <ListItemText
               primary={c.question}
               secondary={c.answer}
-              primaryTypographyProps={{ sx: { color: "white" } }}
-              secondaryTypographyProps={{ sx: { color: "white" } }}
+              primaryTypographyProps={{
+                sx: {
+                  color: "white",
+                  fontWeight: "medium",
+                  fontSize: "1rem",
+                },
+              }}
+              secondaryTypographyProps={{
+                sx: {
+                  color: "rgba(255, 255, 255, 0.7)",
+                  fontSize: "0.875rem",
+                },
+              }}
             />
             <Box sx={{ display: "flex", gap: 1 }}>
-              <IconButton onClick={() => handleStartEdit(c)}>
-                <EditIcon sx={{ color: "white" }} />
+              <IconButton
+                onClick={() => handleStartEdit(c)}
+                sx={{
+                  color: "rgba(255, 255, 255, 0.7)",
+                }}
+              >
+                <EditIcon />
               </IconButton>
-              <IconButton onClick={() => handleDelete(c.id)}>
-                <DeleteIcon sx={{ color: "white" }} />
+              <IconButton
+                onClick={() => handleDelete(c.id)}
+                sx={{
+                  color: "rgba(255, 255, 255, 0.7)",
+                }}
+              >
+                <DeleteIcon />
               </IconButton>
             </Box>
           </ListItem>
@@ -182,31 +242,77 @@ export default function CardsPage() {
       </List>
 
       {/* Edit dialog */}
-      <Dialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)}>
-        <DialogTitle>Edit card</DialogTitle>
+      <Dialog
+        open={isEditDialogOpen}
+        onClose={() => setIsEditDialogOpen(false)}
+        PaperProps={{
+          sx: {
+            backgroundColor: "white",
+            borderRadius: 1,
+          },
+        }}
+      >
+        <DialogTitle sx={{ color: "black" }}>Edit card</DialogTitle>
         <DialogContent className="flex flex-col gap-2">
           <TextField
             label="Question"
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
+            value={editQuestion}
+            onChange={(e) => setEditQuestion(e.target.value)}
             fullWidth
             size="small"
-            sx={inputStyles}
+            margin="dense"
+            sx={{
+              backgroundColor: "white",
+              borderRadius: 1,
+              "& .MuiInputBase-input": { color: "black" },
+              "& .MuiInputLabel-root": { color: "black" },
+            }}
           />
           <TextField
             label="Answer"
-            value={answer}
-            onChange={(e) => setAnswer(e.target.value)}
+            value={editAnswer}
+            onChange={(e) => setEditAnswer(e.target.value)}
             fullWidth
             size="small"
-            sx={inputStyles}
+            margin="dense"
+            sx={{
+              backgroundColor: "white",
+              borderRadius: 1,
+              "& .MuiInputBase-input": { color: "black" },
+              "& .MuiInputLabel-root": { color: "black" },
+            }}
           />
+          <FormControl fullWidth size="small" sx={{ mt: 1 }}>
+            <InputLabel>Category</InputLabel>
+            <Select
+              value={editCategoryId ?? ""}
+              onChange={(e) => setEditCategoryId(Number(e.target.value))}
+              label="Category"
+            >
+              {categories.map((c) => (
+                <MenuItem key={c.id} value={c.id}>
+                  {c.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+          <Button
+            onClick={() => setIsEditDialogOpen(false)}
+            sx={{ color: "black" }}
+          >
+            Cancel
+          </Button>
           <Button
             variant="contained"
-            sx={{ backgroundColor: "white", color: "black" }}
+            sx={{
+              backgroundColor: "black",
+              color: "white",
+              "&:hover": {
+                backgroundColor: "#333",
+              },
+            }}
             onClick={handleSaveEdit}
           >
             Save
