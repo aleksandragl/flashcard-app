@@ -135,6 +135,7 @@ export default function CategoriesPage() {
             onChange={(e) => setEditName(e.target.value)}
             fullWidth
             size="small"
+            margin="dense"
           />
         </DialogContent>
         <DialogActions>
