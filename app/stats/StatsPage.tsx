@@ -6,8 +6,7 @@ import { getStatsSummaryForCard } from "./actions";
 import { Card as CardType } from "@/types";
 import { List, ListItem, ListItemText, Typography } from "@mui/material";
 
-export default function StatsPage({ categoryId }: { categoryId?: number }) {
-  //uuendatud
+export default function StatsPage() {
   const [cards, setCards] = useState<CardType[]>([]);
   const [stats, setStats] = useState<
     Record<number, { correct: number; wrong: number }>
@@ -15,7 +14,7 @@ export default function StatsPage({ categoryId }: { categoryId?: number }) {
 
   useEffect(() => {
     async function loadCardsAndStats() {
-      const data = await getCards(categoryId);
+      const data = await getCards(); //
       setCards(data);
 
       const statsObj: typeof stats = {};
@@ -26,7 +25,7 @@ export default function StatsPage({ categoryId }: { categoryId?: number }) {
       setStats(statsObj);
     }
     loadCardsAndStats();
-  }, [categoryId]);
+  }, []);
 
   if (cards.length === 0)
     return <div className="p-4 text-center text-white">No cards yet</div>;
