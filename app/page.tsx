@@ -5,7 +5,7 @@ import Navbar from "./Navbar";
 import CategoriesPage from "./categories/page";
 import CardsPage from "./cards/page";
 import PlayMode from "./cards/play";
-import StatsPage from "./stats/page";
+import StatsPage from "./stats/StatsPage";
 
 export default function HomePage() {
   const [view, setView] = useState<"categories" | "cards" | "play" | "stats">(
