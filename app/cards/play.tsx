@@ -1,4 +1,3 @@
-// app/cards/play.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -9,8 +8,41 @@ import {
   Button,
   ToggleButton,
   ToggleButtonGroup,
+  Box,
+  Typography,
+  CircularProgress,
 } from "@mui/material";
 import { addStat } from "../stats/actions";
+
+function CircularProgressWithLabel({ value }: { value: number }) {
+  return (
+    <Box sx={{ position: "relative", display: "inline-flex" }}>
+      <CircularProgress
+        variant="determinate"
+        value={value}
+        size={80}
+        thickness={5}
+        sx={{ color: "white" }}
+      />
+      <Box
+        sx={{
+          top: 0,
+          left: 0,
+          bottom: 0,
+          right: 0,
+          position: "absolute",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Typography variant="caption" component="div" sx={{ color: "white" }}>
+          {`${Math.round(value)}%`}
+        </Typography>
+      </Box>
+    </Box>
+  );
+}
 
 export default function PlayMode({ categoryId }: { categoryId?: number }) {
   const [cards, setCards] = useState<CardType[]>([]);
@@ -30,10 +62,9 @@ export default function PlayMode({ categoryId }: { categoryId?: number }) {
     load();
   }, [categoryId]);
 
-  // prepare order depending on mode
+  //
   const playOrder = useMemo(() => {
     if (mode === "order") return cards.map((_, i) => i);
-    // random shuffle indices
     const arr = cards.map((_, i) => i);
     for (let i = arr.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -56,7 +87,9 @@ export default function PlayMode({ categoryId }: { categoryId?: number }) {
       wrong: prev.wrong + (isCorrect ? 0 : 1),
     }));
 
-    setLastResult(isCorrect ? "Correct" : `Wrong — correct: ${current.answer}`);
+    setLastResult(
+      isCorrect ? "✅ Correct!" : `❌ Wrong — correct: ${current.answer}`
+    );
 
     try {
       await addStat(current.id, isCorrect);
@@ -68,6 +101,9 @@ export default function PlayMode({ categoryId }: { categoryId?: number }) {
     setIndex((i) => (i + 1 >= playOrder.length ? 0 : i + 1));
   }
 
+  // progressi protsent
+  const progress = (index / cards.length) * 100;
+
   const inputStyles = {
     "& .MuiOutlinedInput-root": {
       "& fieldset": { borderColor: "white" },
@@ -77,12 +113,10 @@ export default function PlayMode({ categoryId }: { categoryId?: number }) {
   };
 
   return (
-    <div className="max-w-md mx-auto p-4 space-y-4">
-      <h1 className="text-xl font-semibold text-center text-white">
-        Play Mode
-      </h1>
+    <div className="max-w-md mx-auto p-4 space-y-4 text-white">
+      <h1 className="text-xl font-semibold text-center">Play Mode</h1>
 
-      <div className="flex justify-center">
+      <div className="flex justify-center mb-4">
         <ToggleButtonGroup
           value={mode}
           exclusive
@@ -116,8 +150,12 @@ export default function PlayMode({ categoryId }: { categoryId?: number }) {
         </ToggleButtonGroup>
       </div>
 
+      <div className="flex justify-center mb-2">
+        <CircularProgressWithLabel value={progress} />
+      </div>
+
       <div className="p-4 border border-white rounded shadow">
-        <p className="mb-2 font-medium text-white">{current.question}</p>
+        <p className="mb-2 font-medium">{current.question}</p>
 
         <TextField
           label="Your answer"
@@ -139,13 +177,13 @@ export default function PlayMode({ categoryId }: { categoryId?: number }) {
         </div>
 
         {lastResult && (
-          <div className="mt-2 text-sm text-white">
+          <div className="mt-2 text-sm">
             <strong>{lastResult}</strong>
           </div>
         )}
       </div>
 
-      <div className="text-center text-white">
+      <div className="text-center">
         ✅ {score.correct} | ❌ {score.wrong}
       </div>
     </div>
